@@ -1,0 +1,406 @@
+### Backend API Tests for Modtra
+### Base URL
+@baseURL = http://localhost:4000
+@token = YOUR_JWT_TOKEN_HERE
+
+### ============================================
+### 1. AUTHENTICATION
+### ============================================
+
+### Register new user
+POST {{baseURL}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "password123",
+  "name": "Test User"
+}
+
+### Login (copy the token from response)
+POST {{baseURL}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "password123"
+}
+
+### Get current user profile (requires auth)
+GET {{baseURL}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### ============================================
+### 2. SEARCH APIs (NEW)
+### ============================================
+
+### Get trending products
+GET {{baseURL}}/api/search/trending?limit=5
+
+### Get bestsellers
+GET {{baseURL}}/api/search/bestsellers?limit=10
+
+### Get new arrivals
+GET {{baseURL}}/api/search/new-arrivals?limit=10
+
+### Get top rated products
+GET {{baseURL}}/api/search/top-rated?limit=10
+
+### Advanced search with filters
+GET {{baseURL}}/api/search/advanced?q=trà&category=coffee&minPrice=30000&maxPrice=80000&sortBy=price_asc&limit=20
+
+### ============================================
+### 3. WISHLIST APIs (NEW - requires auth)
+### ============================================
+
+### Get user's wishlist
+GET {{baseURL}}/api/wishlist
+Authorization: Bearer {{token}}
+
+### Add product to wishlist
+POST {{baseURL}}/api/wishlist
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": "YOUR_PRODUCT_ID_HERE"
+}
+
+### Remove from wishlist
+DELETE {{baseURL}}/api/wishlist/YOUR_PRODUCT_ID_HERE
+Authorization: Bearer {{token}}
+
+### Check if product is in wishlist
+GET {{baseURL}}/api/wishlist/check/YOUR_PRODUCT_ID_HERE
+Authorization: Bearer {{token}}
+
+### Get wishlist item count
+GET {{baseURL}}/api/wishlist/count
+Authorization: Bearer {{token}}
+
+### Bulk check multiple products
+POST {{baseURL}}/api/wishlist/check-bulk
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productIds": ["product-id-1", "product-id-2", "product-id-3"]
+}
+
+### ============================================
+### 4. REVIEWS APIs (EXTENDED)
+### ============================================
+
+### Get reviews for a product
+GET {{baseURL}}/api/reviews?productId=YOUR_PRODUCT_ID&limit=10&offset=0
+
+### Create a review (requires auth)
+POST {{baseURL}}/api/reviews
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": "YOUR_PRODUCT_ID",
+  "rating": 5,
+  "title": "Amazing matcha!",
+  "content": "Best matcha latte I've ever had. Smooth and creamy with perfect sweetness level."
+}
+
+### Update review (requires auth - owner only)
+PUT {{baseURL}}/api/reviews/REVIEW_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "rating": 4,
+  "title": "Updated: Still great!",
+  "content": "Updated my review after trying different variations."
+}
+
+### Delete review (requires auth - owner only)
+DELETE {{baseURL}}/api/reviews/REVIEW_ID
+Authorization: Bearer {{token}}
+
+### ============================================
+### 5. ADMIN APIs (NEW - requires auth)
+### ============================================
+
+### Get admin dashboard stats
+GET {{baseURL}}/api/admin/dashboard
+Authorization: Bearer {{token}}
+
+### Get all orders (admin)
+GET {{baseURL}}/api/admin/orders?status=pending&limit=20
+
+### Get order detail (admin)
+GET {{baseURL}}/api/admin/orders/ORDER_ID
+Authorization: Bearer {{token}}
+
+### Update order status (admin)
+PATCH {{baseURL}}/api/admin/orders/ORDER_ID/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "confirmed"
+}
+
+### Create new product (admin)
+POST {{baseURL}}/api/admin/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "slug": "matcha-latte-special",
+  "name": "Matcha Latte Đặc Biệt",
+  "nameEn": "Special Matcha Latte",
+  "category": "matcha",
+  "price": 65000,
+  "image": "/images/products/matcha-latte-special.jpg",
+  "description": "Matcha cao cấp từ Nhật Bản",
+  "descriptionEn": "Premium Japanese matcha",
+  "tags": ["matcha", "hot", "premium"],
+  "isNew": true,
+  "isBestseller": false,
+  "inStock": true,
+  "ingredients": ["Matcha Nhật Bản", "Sữa tươi", "Đường"],
+  "customIce": true,
+  "customSugar": true,
+  "customMilk": ["Sữa tươi", "Sữa yến mạch", "Sữa hạnh nhân"],
+  "customSize": ["M", "L"]
+}
+
+### Update product (admin)
+PUT {{baseURL}}/api/admin/products/PRODUCT_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "price": 70000,
+  "inStock": true
+}
+
+### Delete product (admin)
+DELETE {{baseURL}}/api/admin/products/PRODUCT_ID
+Authorization: Bearer {{token}}
+
+### Get all users (admin)
+GET {{baseURL}}/api/admin/users?limit=50
+
+### Get all coupons (admin)
+GET {{baseURL}}/api/admin/coupons
+
+### Create coupon (admin)
+POST {{baseURL}}/api/admin/coupons
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "code": "SPRING2026",
+  "discountPercent": 15,
+  "minOrderValue": 100000,
+  "maxUses": 100,
+  "expiresAt": "2026-12-31T23:59:59Z"
+}
+
+### Update coupon (admin)
+PUT {{baseURL}}/api/admin/coupons/COUPON_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "discountPercent": 20,
+  "isActive": true
+}
+
+### Delete coupon (admin)
+DELETE {{baseURL}}/api/admin/coupons/COUPON_ID
+Authorization: Bearer {{token}}
+
+### Get analytics (admin)
+GET {{baseURL}}/api/admin/analytics?from=2026-01-01&to=2026-12-31
+Authorization: Bearer {{token}}
+
+### ============================================
+### 6. PAYMENTS APIs (NEW - mock)
+### ============================================
+
+### Initiate payment
+POST {{baseURL}}/api/payments/initiate
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "ORDER_ID",
+  "amount": 150000,
+  "method": "momo"
+}
+
+### Verify payment
+POST {{baseURL}}/api/payments/verify
+Content-Type: application/json
+
+{
+  "transactionId": "TRANSACTION_ID",
+  "orderId": "ORDER_ID"
+}
+
+### Payment webhook (called by payment provider)
+POST {{baseURL}}/api/payments/webhook
+Content-Type: application/json
+
+{
+  "transactionId": "mock-txn-123",
+  "orderId": "order-456",
+  "status": "success",
+  "amount": 150000
+}
+
+### ============================================
+### 7. SHIPPING APIs (NEW)
+### ============================================
+
+### Get shipping methods
+GET {{baseURL}}/api/shipping/methods
+
+### Calculate shipping fee
+POST {{baseURL}}/api/shipping/calculate
+Content-Type: application/json
+
+{
+  "district": "Quận 1",
+  "city": "Hồ Chí Minh",
+  "weight": 500
+}
+
+### Track shipment
+GET {{baseURL}}/api/shipping/track/TRACKING_CODE
+
+### ============================================
+### 8. NOTIFICATIONS APIs (NEW - requires auth)
+### ============================================
+
+### Get user notifications
+GET {{baseURL}}/api/notifications
+Authorization: Bearer {{token}}
+
+### Mark notification as read
+PUT {{baseURL}}/api/notifications/NOTIFICATION_ID/read
+Authorization: Bearer {{token}}
+
+### Subscribe to push notifications
+POST {{baseURL}}/api/notifications/subscribe
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "endpoint": "https://fcm.googleapis.com/...",
+  "keys": {
+    "p256dh": "key",
+    "auth": "auth"
+  }
+}
+
+### ============================================
+### 9. SUPPORT APIs (NEW)
+### ============================================
+
+### Get help articles
+GET {{baseURL}}/api/support/help?category=order
+
+### Create support ticket (requires auth)
+POST {{baseURL}}/api/support/tickets
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "subject": "Order delivery issue",
+  "message": "My order hasn't arrived after 3 days",
+  "category": "delivery"
+}
+
+### Get user's tickets
+GET {{baseURL}}/api/support/tickets
+Authorization: Bearer {{token}}
+
+### ============================================
+### 10. ANALYTICS APIs (NEW)
+### ============================================
+
+### Track event
+POST {{baseURL}}/api/analytics/track
+Content-Type: application/json
+
+{
+  "event": "product_view",
+  "productId": "PRODUCT_ID",
+  "sessionId": "session-123"
+}
+
+### ============================================
+### 11. EXISTING APIs (for reference)
+### ============================================
+
+### Get all products with filters
+GET {{baseURL}}/api/products?category=matcha&minPrice=0&maxPrice=100000&sortBy=price_asc&limit=20&offset=0
+
+### Get single product
+GET {{baseURL}}/api/products/matcha-latte-kem-sua
+
+### Get related products
+GET {{baseURL}}/api/products/related/matcha-latte-kem-sua
+
+### Autocomplete search
+GET {{baseURL}}/api/products/autocomplete?q=tra
+
+### Get all categories
+GET {{baseURL}}/api/categories
+
+### Get all locations
+GET {{baseURL}}/api/locations
+
+### Get active coupons
+GET {{baseURL}}/api/coupons
+
+### Validate coupon
+POST {{baseURL}}/api/coupons/validate
+Content-Type: application/json
+
+{
+  "code": "WELCOME10",
+  "orderTotal": 150000
+}
+
+### Create order (requires auth)
+POST {{baseURL}}/api/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": "PRODUCT_ID",
+      "quantity": 2,
+      "ice": "normal",
+      "sugar": "50%",
+      "milk": "Sữa tươi"
+    }
+  ],
+  "deliveryMethod": "delivery",
+  "shippingAddress": "123 Nguyễn Huệ, Quận 1",
+  "district": "Quận 1",
+  "city": "Hồ Chí Minh",
+  "phone": "0901234567",
+  "couponCode": "WELCOME10"
+}
+
+### Get user's orders
+GET {{baseURL}}/api/orders
+Authorization: Bearer {{token}}
+
+### Get order detail
+GET {{baseURL}}/api/orders/ORDER_ID
+Authorization: Bearer {{token}}
+
+### Health check
+GET {{baseURL}}/health

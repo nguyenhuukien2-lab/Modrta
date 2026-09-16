@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap');
+
+:root {
+  --font-jakarta: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  --font-playfair: 'Playfair Display', 'Newsreader', Georgia, serif;
+}
+
+@layer base {
+  * {
+    @apply border-surface-card;
+  }
+  
+  body {
+    @apply bg-surface-bg text-text-main font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-text-main font-semibold;
+  }
+
+  h1 {
+    @apply text-h1;
+  }
+
+  h2 {
+    @apply text-h2;
+  }
+
+  h3 {
+    @apply text-h3;
+  }
+
+  p {
+    @apply text-body text-text-main;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Button Styles */
+  .btn-primary {
+    @apply bg-brand-primary text-white px-6 py-3 rounded-full font-medium 
+           hover:bg-opacity-90 transition-all duration-300 
+           shadow-zen hover:shadow-card-hover;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-brand-primary px-6 py-3 rounded-full font-medium 
+           border-2 border-brand-primary hover:bg-brand-primary hover:text-white 
+           transition-all duration-300;
+  }
+
+  .btn-accent {
+    @apply bg-brand-accent text-white px-6 py-3 rounded-full font-medium 
+           hover:bg-opacity-90 transition-all duration-300;
+  }
+
+  /* Card Styles */
+  .card {
+    @apply bg-surface-card rounded-2xl p-6 shadow-card 
+           hover:shadow-card-hover transition-shadow duration-300;
+  }
+
+  .card-zen {
+    @apply bg-surface-card-alt rounded-2xl p-6 shadow-zen;
+  }
+
+  /* Badge/Tag Styles */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-primary {
+    @apply badge bg-brand-accent/20 text-brand-primary;
+  }
+
+  .badge-new {
+    @apply badge bg-brand-primary text-white;
+  }
+
+  /* Input Styles */
+  .input {
+    @apply w-full px-4 py-3 rounded-xl border-2 border-surface-card-alt 
+           focus:border-brand-accent focus:outline-none 
+           bg-white text-text-main transition-colors duration-200;
+  }
+
+  /* Section Spacing */
+  .section {
+    @apply py-16 md:py-20;
+  }
+
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+@layer utilities {
+  /* Text Styles */
+  .text-zen {
+    @apply font-serif italic text-brand-primary;
+  }
+
+  /* Gradient Text */
+  .text-gradient {
+    @apply bg-gradient-to-r from-brand-primary to-brand-accent 
+           bg-clip-text text-transparent;
+  }
+
+  /* Glass Effect */
+  .glass {
+    @apply bg-white/80 backdrop-blur-md;
+  }
+}

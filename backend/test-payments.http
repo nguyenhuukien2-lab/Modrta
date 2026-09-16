@@ -1,0 +1,99 @@
+### Modtra Payment System Tests
+
+@baseUrl = http://localhost:4000
+@token = your-jwt-token-here
+
+###
+### 1. VIETQR PAYMENT TESTS
+###
+
+### 1.1 Generate VietQR Code
+POST {{baseUrl}}/api/payments/vietqr
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "orderId": "test-order-id-123"
+}
+
+### 1.2 Verify VietQR Payment
+POST {{baseUrl}}/api/payments/vietqr/verify
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "transactionRef": "VQR-ORD-20260916-XXXX-1234567890"
+}
+
+### 1.3 Get Payment Status
+GET {{baseUrl}}/api/payments/VQR-ORD-20260916-XXXX-1234567890
+Authorization: Bearer {{token}}
+
+###
+### 2. MOMO PAYMENT TESTS
+###
+
+### 2.1 Initialize MoMo Payment
+POST {{baseUrl}}/api/payments/momo/init
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "orderId": "test-order-id-456"
+}
+
+### 2.2 MoMo Webhook Callback (Simulated - from MoMo server)
+POST {{baseUrl}}/api/payments/momo/callback
+Content-Type: application/json
+
+{
+  "requestId": "1234567890-test-order-id-456",
+  "resultCode": 0,
+  "message": "Successful",
+  "amount": 500000,
+  "orderId": "ORD-20260916-0001",
+  "transId": "2109131234567890",
+  "extraData": "eyJvcmRlcklkIjogInRlc3Qtb3JkZXItaWQtNDU2IiwgInVzZXJJZCI6ICJ1c2VyLWlkLTEyMyJ9"
+}
+
+###
+### 3. LOYALTY POINTS TESTS
+###
+
+### 3.1 Get Loyalty Status
+GET {{baseUrl}}/api/loyalty/status
+Authorization: Bearer {{token}}
+
+### 3.2 Add Loyalty Points (Internal API)
+POST {{baseUrl}}/api/loyalty/add-points
+Content-Type: application/json
+X-Internal-Secret: your-internal-secret
+
+{
+  "userId": "user-id-123",
+  "amount": 1000,
+  "reason": "order_purchase",
+  "orderId": "order-id-123"
+}
+
+### 3.3 Redeem Loyalty Points
+POST {{baseUrl}}/api/loyalty/redeem
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "amount": 500
+}
+
+### 3.4 Get Loyalty History
+GET {{baseUrl}}/api/loyalty/history?page=1&limit=10
+Authorization: Bearer {{token}}
+
+###
+### 4. RECONCILIATION TESTS
+###
+
+### 4.1 Trigger Daily Reconciliation
+POST {{baseUrl}}/api/admin/reconciliation/daily
+X-Cron-Secret: your-cron-secret
+

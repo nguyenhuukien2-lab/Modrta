@@ -1,0 +1,310 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
+
+enum ProductCategory {
+  matcha
+  coffee
+  dessert
+  equipment
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  preparing
+  delivering
+  completed
+  cancelled
+}
+
+enum DeliveryMethod {
+  delivery
+  pickup
+}
+
+enum PaymentMethod {
+  vietqr
+  momo
+  zalopay
+  card
+  cod
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+enum UserTier {
+  member
+  silver
+  gold
+}
+
+// ─── MODELS ───────────────────────────────────────────────────────────────────
+
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id             String          @id @default(cuid())
+  slug           String          @unique
+  name           String
+  nameEn         String
+  category       ProductCategory
+  subcategory    String?
+  price          Int             // VND, không dùng float
+  image          String
+  description    String
+  descriptionEn  String
+  tags           String[]
+  isNew          Boolean         @default(false)
+  isBestseller   Boolean         @default(false)
+  inStock        Boolean         @default(true)
+  ingredients    String[]
+  // Customization options stored as JSON
+  customIce      Boolean         @default(false)
+  customSugar    Boolean         @default(false)
+  customMilk     String[]        // ['Yến mạch', 'Hạnh nhân', ...]
+  customSize     String[]        // ['M', 'L']
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  categoryRef    Category?       @relation(fields: [categoryId], references: [id])
+  categoryId     String?
+
+  orderItems     OrderItem[]
+  reviews        Review[]
+  wishlistItems  WishlistItem[]  @relation("Wishlist")
+
+  @@map("products")
+}
+
+model Location {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  address     String
+  district    String
+  city        String
+  phone       String
+  hours       String
+  features    String[]
+  image       String
+  lat         Float?
+  lng         Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("locations")
+}
+
+model USP {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  icon        String
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("usps")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  address      String?
+  district     String?
+  city         String?
+  role         String   @default("USER")  // "USER" | "ADMIN"
+  tier         UserTier @default(member)   // member | silver | gold
+  loyaltyPoints Int     @default(0)        // Cumulative points
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders        Order[]
+  reviews       Review[]
+  wishlistItems WishlistItem[]
+  payments      Payment[]
+  pointLogs     PointLog[]
+
+  @@map("users")
+}
+
+model Coupon {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  discountPercent Int      // 0-100
+  minOrderValue   Int      @default(0) // VND
+  maxUses         Int      @default(100)
+  usedCount       Int      @default(0)
+  isActive        Boolean  @default(true)
+  expiresAt       DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  orders          Order[]
+
+  @@map("coupons")
+}
+
+model Order {
+  id             String         @id @default(cuid())
+  orderNumber    String         @unique // ORD-20260915-XXXX
+  status         OrderStatus    @default(pending)
+  deliveryMethod DeliveryMethod
+  paymentMethod  PaymentMethod
+  paymentStatus  PaymentStatus  @default(pending)
+
+  // Customer info (snapshot tại thời điểm đặt)
+  customerName   String
+  customerPhone  String
+  customerEmail  String?
+  address        String?
+  district       String?
+  city           String?
+  note           String?
+  deliveryTime   String?
+
+  // Pricing
+  subtotal       Int            // VND
+  discount       Int            @default(0)
+  shipping       Int            @default(0)
+  total          Int
+
+  ecoPackaging   Boolean        @default(false)
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relations
+  user           User?          @relation(fields: [userId], references: [id])
+  userId         String?
+  coupon         Coupon?        @relation(fields: [couponId], references: [id])
+  couponId       String?
+  items          OrderItem[]
+  payment        Payment?
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  quantity  Int
+  unitPrice Int     // VND snapshot
+  // Customization snapshot
+  ice       String?
+  sugar     String?
+  milk      String?
+  size      String?
+  itemNote  String?
+
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+
+  @@map("order_items")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5 stars
+  title     String
+  content   String
+  verified  Boolean  @default(false) // Purchased before?
+  helpful   Int      @default(0)     // Helpful count
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  @@map("reviews")
+  @@index([productId])
+  @@index([userId])
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  product   Product  @relation("Wishlist", fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+
+  @@unique([userId, productId])
+  @@map("wishlist_items")
+  @@index([userId])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  transactionRef  String        @unique // VietQR: transaction ref, MoMo: requestId
+  status          PaymentStatus @default(pending)
+  method          PaymentMethod
+  amount          Int           // VND
+  
+  // MoMo specific
+  momoTransId     String?       // transId from MoMo
+  momoResultCode  Int?          // 0 = success, others = failure
+  
+  // VietQR specific
+  qrCode          String?       // Encoded QR image
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  order           Order?        @relation(fields: [orderId], references: [id])
+  orderId         String?       @unique
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+
+  @@map("payments")
+  @@index([transactionRef])
+  @@index([userId])
+}
+
+model PointLog {
+  id        String   @id @default(cuid())
+  amount    Int      // Can be positive (earned) or negative (redeemed)
+  reason    String   // "order_purchase", "redeemed", "adjustment", etc.
+  orderId   String?  // If from order
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  @@map("point_logs")
+  @@index([userId])
+}
+

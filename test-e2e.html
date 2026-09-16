@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modtra E2E Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white; 
+            border-radius: 12px; 
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #333; margin-bottom: 30px; text-align: center; }
+        .test { 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            border-left: 4px solid #ddd;
+            background: #f9f9f9;
+        }
+        .test.pass { 
+            border-left-color: #10b981; 
+            background: #ecfdf5;
+        }
+        .test.fail { 
+            border-left-color: #ef4444; 
+            background: #fef2f2;
+        }
+        .test.loading { 
+            border-left-color: #f59e0b; 
+            background: #fffbf0;
+        }
+        .test-name { font-weight: 600; color: #333; margin-bottom: 5px; }
+        .test-info { font-size: 14px; color: #666; }
+        .test-pass { color: #10b981; font-weight: 600; }
+        .test-fail { color: #ef4444; font-weight: 600; }
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            background: #667eea; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            cursor: pointer;
+            margin: 20px 0 0 0;
+        }
+        button:hover { background: #5a67d8; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f0f9ff;
+            border-radius: 8px;
+            border-left: 4px solid #0284c7;
+        }
+        .summary h3 { color: #333; margin-bottom: 10px; }
+        .summary-item { margin: 8px 0; font-size: 14px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Modtra E2E Test Suite</h1>
+        <button id="startBtn" onclick="runTests()">Start Testing</button>
+        <div id="tests"></div>
+        <div id="summary" style="display:none" class="summary">
+            <h3>Summary</h3>
+            <div id="summaryContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:4000';
+        const testsDiv = document.getElementById('tests');
+        const testState = {
+            email: `test_${Math.random().toString(36).substring(7)}@example.com`,
+            password: 'TestPassword123!',
+            name: 'Test User',
+            token: '',
+            userId: '',
+            orderId: '',
+            productId: '',
+            transactionRef: ''
+        };
+
+        async function apiCall(method, endpoint, body = null) {
+            try {
+                const options = {
+                    method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                if (testState.token) {
+                    options.headers['Authorization'] = `Bearer ${testState.token}`;
+                }
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+                const response = await fetch(`${baseUrl}${endpoint}`, options);
+                return await response.json();
+            } catch (err) {
+                return { error: err.message };
+            }
+        }
+
+        function addTest(name, result) {
+            const div = document.createElement('div');
+            div.className = `test ${result.success ? 'pass' : result.loading ? 'loading' : 'fail'}`;
+            div.innerHTML = `
+                <div class="test-name">${name}</div>
+                <div class="test-info">
+                    ${result.success ? '<span class="test-pass">✓ PASS</span>' : ''}
+                    ${result.fail ? '<span class="test-fail">✗ FAIL</span>' : ''}
+                    ${result.loading ? '<span>⏳ LOADING...</span>' : ''}
+                    ${result.message ? `<div>${result.message}</div>` : ''}
+                </div>
+            `;
+            testsDiv.appendChild(div);
+        }
+
+        async function runTests() {
+            document.getElementById('startBtn').disabled = true;
+            testsDiv.innerHTML = '';
+
+            // Test 1: Health Check
+            addTest('Health Check', { loading: true });
+            let res = await apiCall('GET', '/health');
+            if (res.status === 'ok') {
+                addTest('Health Check', { success: true, message: 'Backend responding' });
+            } else {
+                addTest('Health Check', { fail: true, message: 'Backend not responding' });
+                return;
+            }
+
+            // Test 2: Register
+            addTest('Register User', { loading: true });
+            res = await apiCall('POST', '/api/auth/register', {
+                email: testState.email,
+                password: testState.password,
+                name: testState.name
+            });
+            if (res.data?.id) {
+                testState.userId = res.data.id;
+                addTest('Register User', { success: true, message: `Email: ${testState.email}` });
+            } else {
+                addTest('Register User', { fail: true, message: res.error || 'Failed to register' });
+                return;
+            }
+
+            // Test 3: Login
+            addTest('Login User', { loading: true });
+            res = await apiCall('POST', '/api/auth/login', {
+                email: testState.email,
+                password: testState.password
+            });
+            if (res.token) {
+                testState.token = res.token;
+                addTest('Login User', { success: true, message: 'Token received' });
+            } else {
+                addTest('Login User', { fail: true, message: res.error || 'Failed to login' });
+                return;
+            }
+
+            // Test 4: Get Profile
+            addTest('Get Profile', { loading: true });
+            res = await apiCall('GET', '/api/auth/me');
+            if (res.name) {
+                addTest('Get Profile', { success: true, message: `Name: ${res.name}, Tier: ${res.tier}` });
+            } else {
+                addTest('Get Profile', { fail: true, message: 'Could not fetch profile' });
+            }
+
+            // Test 5: Get Products
+            addTest('Get Products', { loading: true });
+            res = await apiCall('GET', '/api/products');
+            if (Array.isArray(res) && res.length > 0) {
+                testState.productId = res[0].id;
+                addTest('Get Products', { success: true, message: `${res.length} products found` });
+            } else {
+                addTest('Get Products', { fail: true, message: 'No products found' });
+            }
+
+            // Test 6: Create Order
+            addTest('Create Order', { loading: true });
+            res = await apiCall('POST', '/api/orders', {
+                items: [{ productId: testState.productId, quantity: 1, size: 'M' }],
+                deliveryMethod: 'delivery',
+                paymentMethod: 'cod',
+                customerName: testState.name,
+                customerPhone: '0901234567',
+                address: '123 Nguyen Hue',
+                district: 'Q1',
+                city: 'TP. Ho Chi Minh'
+            });
+            if (res.id) {
+                testState.orderId = res.id;
+                addTest('Create Order', { success: true, message: `Order #${res.orderNumber} created` });
+            } else {
+                addTest('Create Order', { fail: true, message: res.error || 'Failed to create order' });
+            }
+
+            // Test 7: Create VietQR
+            addTest('Create VietQR Payment', { loading: true });
+            res = await apiCall('POST', '/api/payments/vietqr', { orderId: testState.orderId });
+            if (res.success) {
+                testState.transactionRef = res.transactionRef;
+                addTest('Create VietQR Payment', { success: true, message: 'QR code generated' });
+            } else {
+                addTest('Create VietQR Payment', { fail: true, message: res.error || 'Failed' });
+            }
+
+            // Test 8: Verify Payment
+            addTest('Verify Payment', { loading: true });
+            res = await apiCall('POST', '/api/payments/vietqr/verify', { transactionRef: testState.transactionRef });
+            if (res.success) {
+                addTest('Verify Payment', { success: true, message: `${res.pointsEarned} points earned` });
+            } else {
+                addTest('Verify Payment', { fail: true, message: res.error || 'Failed' });
+            }
+
+            // Test 9: Check Loyalty
+            addTest('Check Loyalty Status', { loading: true });
+            res = await apiCall('GET', '/api/loyalty/status');
+            if (res.user) {
+                addTest('Check Loyalty Status', { success: true, message: `Points: ${res.user.loyaltyPoints}, Tier: ${res.user.tier}` });
+            } else {
+                addTest('Check Loyalty Status', { fail: true, message: 'Failed to get loyalty status' });
+            }
+
+            // Summary
+            const summary = document.getElementById('summary');
+            const summaryContent = document.getElementById('summaryContent');
+            summary.style.display = 'block';
+            summaryContent.innerHTML = `
+                <div class="summary-item"><strong>Test Email:</strong> ${testState.email}</div>
+                <div class="summary-item"><strong>User ID:</strong> ${testState.userId}</div>
+                <div class="summary-item"><strong>Order ID:</strong> ${testState.orderId}</div>
+                <div class="summary-item"><strong>Transaction Ref:</strong> ${testState.transactionRef}</div>
+                <div class="summary-item" style="margin-top: 15px;">
+                    <strong>Next:</strong> Open <a href="http://localhost:3000" target="_blank">http://localhost:3000</a> and login with:<br>
+                    Email: ${testState.email}<br>
+                    Password: ${testState.password}
+                </div>
+            `;
+
+            document.getElementById('startBtn').disabled = false;
+        }
+    </script>
+</body>
+</html>
