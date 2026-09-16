@@ -46,8 +46,6 @@ export default function Header() {
   const navItems = [
     { label: 'Trang chủ',     href: '/',          labelEn: 'Home' },
     { label: 'Thực đơn',      href: '/menu',       labelEn: 'Menu' },
-    { label: 'Matcha',        href: '/matcha',     labelEn: 'Matcha' },
-    { label: 'Cà phê',        href: '/coffee',     labelEn: 'Coffee' },
     { label: 'Về Modtra',     href: '/story',      labelEn: 'Story' },
     { label: 'Liên hệ & Quán',href: '/locations',  labelEn: 'Locations' },
   ]
