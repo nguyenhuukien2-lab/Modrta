@@ -99,7 +99,7 @@ export default function OrderHistoryPage() {
                     <div>
                       <p className="text-sm text-text-muted mb-2">Sản phẩm</p>
                       <div className="flex flex-wrap gap-2">
-                        {order.items.slice(0, 3).map((item, i) => (
+                        {order.items.slice(0, 3).map((item: any, i: number) => (
                           <div key={i} className="w-10 h-10 rounded-lg overflow-hidden bg-surface-card">
                             <Image
                               src={item.product.image}

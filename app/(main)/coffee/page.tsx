@@ -8,7 +8,8 @@ import { Coffee, Mountain, Droplets, Thermometer, Clock, Award, ArrowRight, Leaf
 import ProductCard from '@/components/ProductCard'
 import Button from '@/components/Button'
 import { useCartStore } from '@/lib/store/cartStore'
-import { useProducts, Product } from '@/lib/hooks/useProducts'
+import { useProducts } from '@/lib/hooks/useProducts'
+import type { Product } from '@/lib/types'
 
 export default function CoffeePage() {
   const [selectedFilter, setSelectedFilter] = useState('all')

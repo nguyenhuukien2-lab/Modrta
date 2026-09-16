@@ -1,4 +1,5 @@
-export { useProducts, type Product } from './useProducts'
+export { useProducts } from './useProducts'
+export type { Product } from '@/lib/types'
 export { useCategories, type Category } from './useCategories'
 export { useLocations, type Location } from './useLocations'
 export { useReviews } from './useReviews'

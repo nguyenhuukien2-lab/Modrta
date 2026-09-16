@@ -159,6 +159,8 @@ export default function AccountPage() {
     )
   }
 
+  if (!member) return null
+
   return (
     <ProtectedRoute>
         {/* Breadcrumb */}

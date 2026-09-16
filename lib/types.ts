@@ -9,7 +9,7 @@ export interface Product {
   price: number
   image: string
   description: string
-  descriptionEn: string
+  descriptionEn?: string
   tags: string[]
   isNew?: boolean
   isBestseller?: boolean
@@ -21,8 +21,8 @@ export interface Product {
 export interface ProductCustomization {
   ice?: boolean
   sugar?: boolean
-  milk?: ('Yến mạch' | 'Hạnh nhân' | 'Dừa' | 'Sữa tươi')[]
-  size?: ('S' | 'M' | 'L')[]
+  milk?: string[]
+  size?: string[]
 }
 
 // Cart Types

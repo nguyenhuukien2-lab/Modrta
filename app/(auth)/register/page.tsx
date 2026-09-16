@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AlertCircle, CheckCircle } from 'lucide-react'
 import { useAuth } from '@/lib/context/AuthContext'
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { register, error: authError, clearError } = useAuth()
@@ -235,5 +235,12 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  )
+}
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-brand-primary to-brand-accent" />}>
+      <RegisterForm />
+    </Suspense>
   )
 }

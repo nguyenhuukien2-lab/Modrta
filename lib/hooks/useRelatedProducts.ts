@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { getRelatedProducts } from '@/lib/api'
-import { Product } from './useProducts'
+import type { Product } from '@/lib/types'
 
 export function useRelatedProducts(productId: string, limit = 4) {
   const [products, setProducts] = useState<Product[]>([])

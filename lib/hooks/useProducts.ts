@@ -2,32 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { getProducts, ProductFilters } from '@/lib/api'
+import type { Product } from '@/lib/types'
 
-export interface Product {
-  id: string
-  slug: string
-  name: string
-  nameEn: string
-  category: 'matcha' | 'coffee' | 'dessert' | 'equipment'
-  subcategory?: string
-  price: number
-  image: string
-  description: string
-  descriptionEn?: string
-  tags: string[]
-  isNew: boolean
-  isBestseller: boolean
-  inStock: boolean
-  ingredients?: string[]
-  avgRating?: number
-  reviewCount: number
-  customizations?: {
-    ice?: boolean
-    sugar?: boolean
-    milk?: string[]
-    size?: string[]
-  }
-}
 
 export function useProducts(filters: ProductFilters = {}) {
   const [products, setProducts] = useState<Product[]>([])

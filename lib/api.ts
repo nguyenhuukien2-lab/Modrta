@@ -79,7 +79,7 @@ export async function getProductAutocomplete(q: string) {
   })
 
   if (!res.ok) throw new Error('Failed to fetch autocomplete')
-  return res.json() as Promise<{ suggestions: string[] }>
+  return res.json() as Promise<{ suggestions: string[]; error?: string }>
 }
 
 // ─── ORDERS ────────────────────────────────────────────────────────────────────
@@ -177,7 +177,7 @@ export async function getCoupons() {
   })
 
   if (!res.ok) throw new Error('Failed to fetch coupons')
-  return res.json() as Promise<{ data: Coupon[] }>
+  return res.json() as Promise<{ data: Coupon[]; error?: string }>
 }
 
 export async function validateCoupon(code: string, subtotal: number) {
