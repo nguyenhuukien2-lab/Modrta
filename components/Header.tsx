@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { ShoppingCart, Globe, Menu, X, Leaf, LogIn, UserPlus, LayoutDashboard, LogOut, ChevronDown, Zap } from 'lucide-react'
 import { useCartStore } from '@/lib/store/cartStore'
 import { useAuth } from '@/lib/context/AuthContext'
+import Cart from '@/components/Cart'
 
 export default function Header() {
   const router = useRouter()
@@ -13,6 +14,7 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [language, setLanguage] = useState<'VN' | 'EN'>('VN')
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
+  const [isCartOpen, setIsCartOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const totalItems = useCartStore(state => state.totalItems())
 
@@ -51,6 +53,7 @@ export default function Header() {
   ]
 
   return (
+    <>
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-surface-card-alt shadow-zen">
       <div className="container-custom">
         <div className="flex items-center justify-between h-16 gap-4">
@@ -93,18 +96,18 @@ export default function Header() {
             </button>
 
             {/* Cart */}
-            <Link
-              href="/menu"
+            <button
+              onClick={() => setIsCartOpen(true)}
               className="relative p-2 hover:bg-surface-card-alt rounded-full transition-colors"
               aria-label="Giỏ hàng"
             >
               <ShoppingCart className="w-5 h-5 text-brand-primary" />
               {totalItems > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 min-w-[18px] min-h-[18px] bg-brand-accent text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none px-1">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] min-h-[18px] bg-brand-accent text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none px-1">
                   {totalItems}
                 </span>
               )}
-            </Link>
+            </button>
 
             {/* ── Auth: chưa đăng nhập ── */}
             {!user ? (
@@ -244,5 +247,41 @@ export default function Header() {
         )}
       </div>
     </header>
+
+    {/* ── Cart Drawer ── */}
+    {/* Overlay */}
+    {isCartOpen && (
+      <div
+        className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm"
+        onClick={() => setIsCartOpen(false)}
+      />
+    )}
+
+    {/* Drawer panel */}
+    <div className={`fixed top-0 right-0 h-full w-full max-w-md bg-surface-bg z-50 shadow-2xl transition-transform duration-300 flex flex-col ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* Drawer header */}
+      <div className="flex items-center justify-between px-5 py-4 bg-white border-b border-surface-card-alt flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <ShoppingCart className="w-5 h-5 text-brand-primary" />
+          <span className="font-bold text-text-main text-lg">Giỏ hàng</span>
+          {totalItems > 0 && (
+            <span className="bg-brand-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">{totalItems}</span>
+          )}
+        </div>
+        <button
+          onClick={() => setIsCartOpen(false)}
+          className="p-2 hover:bg-surface-card-alt rounded-full transition-colors"
+        >
+          <X className="w-5 h-5 text-text-muted" />
+        </button>
+      </div>
+
+      {/* Cart content */}
+      <div className="flex-1 overflow-y-auto p-4">
+        <Cart onClose={() => setIsCartOpen(false)} />
+      </div>
+    </div>
+    </>
   )
+}  )
 }

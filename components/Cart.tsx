@@ -8,7 +8,7 @@ import { formatPrice, calculateDiscount } from '@/lib/utils'
 import { Minus, Plus, X, ShoppingBag, Tag, ArrowRight, Percent } from 'lucide-react'
 import Button from './Button'
 
-export default function Cart() {
+export default function Cart({ onClose }: { onClose?: () => void }) {
   const { items, updateQuantity, removeItem, updateCustomization, subtotal } = useCartStore()
   const [couponCode, setCouponCode] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState('')
@@ -243,7 +243,7 @@ export default function Cart() {
         {/* Checkout Button */}
         <div className="px-6 pb-6">
           <Link href="/checkout">
-            <Button size="lg" fullWidth icon={<ArrowRight className="w-5 h-5" />}>
+            <Button size="lg" fullWidth icon={<ArrowRight className="w-5 h-5" />} onClick={onClose}>
               Tiến hành đặt hàng
             </Button>
           </Link>
