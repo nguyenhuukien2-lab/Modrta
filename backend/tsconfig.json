@@ -7,8 +7,8 @@
     "rootDir": "./src",
     "strict": false,
     "noImplicitAny": false,
-    "suppressImplicitAnyIndexErrors": true,
     "noImplicitThis": false,
+    "alwaysStrict": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": false,
@@ -17,13 +17,8 @@
     "sourceMap": false,
     "noEmitOnError": false,
     "allowJs": true,
-    "checkJs": false,
-    "suppressErrorsExternally": true
+    "checkJs": false
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "prisma"],
-  "ts-node": {
-    "transpileOnly": true,
-    "files": true
-  }
+  "exclude": ["node_modules", "dist", "prisma"]
 }
