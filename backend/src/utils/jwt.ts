@@ -6,6 +6,7 @@ const JWT_EXPIRES_IN = '7d' // 7 days
 export interface JWTPayload {
   userId: string
   email: string
+  role?: string
   iat?: number
   exp?: number
 }
@@ -41,4 +42,18 @@ export function getTokenFromHeader(authHeader?: string): string | null {
   if (!authHeader) return null
   const [scheme, token] = authHeader.split(' ')
   return scheme === 'Bearer' ? token : null
+}
+
+export function getTokenFromCookie(cookieHeader?: string): string | null {
+  if (!cookieHeader) return null
+
+  const cookie = cookieHeader
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith('modtra_token='))
+
+  if (!cookie) return null
+
+  const [, token] = cookie.split('=')
+  return token ? decodeURIComponent(token) : null
 }

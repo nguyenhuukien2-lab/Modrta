@@ -6,6 +6,11 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const auth = req.headers.get('Authorization') || ''
+
+    if (!auth) {
+      return NextResponse.json({ error: 'Missing authorization token' }, { status: 401 })
+    }
+
     const res = await fetch(`${BACKEND}/api/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': auth },

@@ -4,8 +4,17 @@ import { authMiddleware, AuthRequest } from '../middleware/authMiddleware'
 
 const router = Router()
 
-// ⚠️ All admin routes require auth (TODO: Add admin role check)
-router.use(authMiddleware)
+const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if ((req as any).role !== 'ADMIN') {
+    res.status(403).json({ error: 'Admin access required' })
+    return
+  }
+
+  next()
+}
+
+// ⚠️ All admin routes require auth + admin role
+router.use(authMiddleware, requireAdmin)
 
 // ─── Dashboard ────────────────────────────────────────────────────────────
 router.get('/dashboard', async (req: AuthRequest, res: Response, next: NextFunction) => {

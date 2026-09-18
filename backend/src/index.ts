@@ -3,6 +3,8 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import { errorHandler } from './middleware/errorHandler'
 import { authMiddleware } from './middleware/authMiddleware'
+import { simpleRateLimit } from './middleware/rateLimit'
+import { validateEnvironment } from './config/env'
 import productsRouter from './routes/products'
 import categoriesRouter from './routes/categories'
 import locationsRouter from './routes/locations'
@@ -23,16 +25,41 @@ import supportRouter from './routes/support'
 import analyticsRouter from './routes/analytics'
 
 dotenv.config()
+validateEnvironment()
 
 const app = express()
 const PORT = process.env.PORT || 4000
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002',
+  'http://localhost:3003',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  'http://127.0.0.1:3002',
+  'http://127.0.0.1:3003',
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[]
 
 // ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
 app.use(cors({
-  origin: '*',
-  credentials: false,
+  origin: (origin, callback) => {
+    if (!origin) {
+      callback(null, true)
+      return
+    }
+
+    if (allowedOrigins.includes(origin) || /^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
+      callback(null, true)
+      return
+    }
+
+    callback(new Error('CORS blocked'))
+  },
+  credentials: true,
 }))
 app.use(express.json())
+app.use(simpleRateLimit({ windowMs: 60 * 1000, maxRequests: 120 }))
 
 // ─── LOGGING ───────────────────────────────────────────────────────────────────
 app.use((req, _res, next) => {
@@ -50,10 +77,10 @@ app.get('/health', (_req, res) => {
 })
 
 // ─── API ROUTES ────────────────────────────────────────────────────────────────
-app.use('/api/auth', authRouter)
+app.use('/api/auth', simpleRateLimit({ windowMs: 60 * 1000, maxRequests: 15 }), authRouter)
 app.use('/api/reviews', reviewsRouter)
 app.use('/api/cart', cartRouter)
-app.use('/api/orders', ordersRouter)
+app.use('/api/orders', simpleRateLimit({ windowMs: 60 * 1000, maxRequests: 30 }), ordersRouter)
 app.use('/api/coupons', couponsRouter)
 app.use('/api/search', searchRouter)
 app.use('/api/wishlist', wishlistRouter)

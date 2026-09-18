@@ -1,11 +1,14 @@
 import { Request, Response, NextFunction } from 'express'
-import { verifyToken, getTokenFromHeader } from '../utils/jwt'
+import { verifyToken, getTokenFromHeader, getTokenFromCookie } from '../utils/jwt'
 
 export interface AuthRequest extends Request {
   user?: {
     userId: string
     email: string
+    role?: string
   }
+  userId?: string
+  role?: string
 }
 
 /**
@@ -17,7 +20,7 @@ export async function authMiddleware(
   next: NextFunction
 ) {
   try {
-    const token = getTokenFromHeader(req.headers.authorization)
+    const token = getTokenFromHeader(req.headers.authorization) || getTokenFromCookie(req.headers.cookie)
 
     if (!token) {
       res.status(401).json({ error: 'Missing authorization token' })
@@ -28,7 +31,10 @@ export async function authMiddleware(
     req.user = {
       userId: payload.userId,
       email: payload.email,
+      role: payload.role || 'USER',
     }
+    ;(req as any).userId = payload.userId
+    ;(req as any).role = payload.role || 'USER'
 
     next()
   } catch (error) {
@@ -45,14 +51,17 @@ export async function optionalAuthMiddleware(
   next: NextFunction
 ) {
   try {
-    const token = getTokenFromHeader(req.headers.authorization)
+    const token = getTokenFromHeader(req.headers.authorization) || getTokenFromCookie(req.headers.cookie)
 
     if (token) {
       const payload = await verifyToken(token)
       req.user = {
         userId: payload.userId,
         email: payload.email,
+        role: payload.role || 'USER',
       }
+      ;(req as any).userId = payload.userId
+      ;(req as any).role = payload.role || 'USER'
     }
 
     next()

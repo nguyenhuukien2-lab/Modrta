@@ -35,22 +35,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Initialize auth from localStorage on mount
+  // Initialize auth from secure cookie session on mount
   useEffect(() => {
     async function initAuth() {
       try {
-        const savedToken = getToken()
-
-        if (savedToken && isTokenValid(savedToken)) {
-          setToken(savedToken)
-          const userData = await getCurrentUser(savedToken)
-          setUser(userData)
-        } else if (savedToken) {
-          // Token expired or invalid
-          removeToken()
-        }
+        const currentUser = await getCurrentUser()
+        setUser(currentUser)
+        setToken('cookie-session')
       } catch (err) {
         console.error('Auth init failed:', err)
+        setUser(null)
+        setToken(null)
         removeToken()
       } finally {
         setLoading(false)
@@ -69,7 +64,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setError(null)
       const response = await registerAPI(data)
-      saveToken(response.token)
       setToken(response.token)
       setUser(response.user)
     } catch (err) {
@@ -83,7 +77,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setError(null)
       const response = await loginAPI(data)
-      saveToken(response.token)
       setToken(response.token)
       setUser(response.user)
     } catch (err) {

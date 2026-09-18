@@ -32,7 +32,7 @@ function generateOrderNumber(): string {
  */
 router.post('/', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = (req as any).userId
+    const userId = (req as any).user?.userId || (req as any).userId
     const {
       items = [],
       deliveryMethod,
