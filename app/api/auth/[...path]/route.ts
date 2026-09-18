@@ -13,12 +13,17 @@ async function proxy(request: NextRequest, context: { params: { path: string[] }
   const headers = new Headers(request.headers)
   headers.delete('host')
 
-  const response = await fetch(`${backendUrl}/api/auth/${path}`, {
-    method: request.method,
-    headers,
-    body: request.method === 'GET' || request.method === 'HEAD' ? undefined : await request.text(),
-    cache: 'no-store',
-  })
+  let response: Response
+  try {
+    response = await fetch(`${backendUrl}/api/auth/${path}`, {
+      method: request.method,
+      headers,
+      body: request.method === 'GET' || request.method === 'HEAD' ? undefined : await request.text(),
+      cache: 'no-store',
+    })
+  } catch {
+    return NextResponse.json({ error: 'Authentication backend is unavailable' }, { status: 503 })
+  }
 
   const responseHeaders = new Headers()
   const contentType = response.headers.get('content-type')

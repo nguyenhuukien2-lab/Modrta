@@ -10,6 +10,17 @@ const defaultHeaders = {
   'Content-Type': 'application/json',
 } as const
 
+async function readJsonResponse<T>(res: Response): Promise<T> {
+  const text = await res.text()
+  if (!text) return {} as T
+
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    return { error: text.slice(0, 200) || `Request failed (${res.status})` } as T
+  }
+}
+
 export interface AuthUser {
   id: string
   email: string
@@ -48,7 +59,7 @@ export async function register(data: {
       body: JSON.stringify(data),
     })
 
-    const json = await res.json()
+    const json = await readJsonResponse<AuthResponse & { error?: string }>(res)
 
     if (!res.ok) {
       throw new Error(json.error || 'Registration failed')
@@ -74,7 +85,7 @@ export async function login(data: {
       body: JSON.stringify(data),
     })
 
-    const json = await res.json()
+    const json = await readJsonResponse<AuthResponse & { error?: string }>(res)
 
     if (!res.ok) {
       throw new Error(json.error || 'Login failed')
@@ -94,7 +105,7 @@ export async function getCurrentUser(token?: string): Promise<AuthUser> {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
 
-  const json = await res.json()
+  const json = await readJsonResponse<AuthUser & { error?: string }>(res)
 
   if (!res.ok) {
     throw new Error(json.error || 'Failed to fetch user')
@@ -119,7 +130,7 @@ export async function updateProfile(
     body: JSON.stringify(data),
   })
 
-  const json = await res.json()
+  const json = await readJsonResponse<AuthUser & { error?: string }>(res)
 
   if (!res.ok) {
     throw new Error(json.error || 'Failed to update profile')
