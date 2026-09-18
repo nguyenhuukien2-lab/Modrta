@@ -3,7 +3,9 @@
  * Handles register, login, logout, and user profile
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const API_BASE = process.env.NODE_ENV === 'production'
+  ? ''
+  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000')
 const defaultHeaders = {
   'Content-Type': 'application/json',
 } as const
