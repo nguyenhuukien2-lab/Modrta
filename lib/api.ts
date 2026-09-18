@@ -6,7 +6,7 @@
 // Client-side: use relative URLs (proxy). Server-side: use full URL.
 const API_BASE = typeof window !== 'undefined'
   ? ''  // client → relative URL → Next.js proxy
-  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000') // server → direct
+  : (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000') // server → direct
 
 export interface ApiResponse<T> {
   data?: T

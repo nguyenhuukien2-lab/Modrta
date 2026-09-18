@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { products } from '@/data/products'
 
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const BACKEND = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
