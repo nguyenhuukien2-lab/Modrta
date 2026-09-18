@@ -2,11 +2,9 @@
 
 > Website đặt hàng trà matcha và cà phê phong cách cinematic, hiện đại.
 
-![Modtra Banner](https://modtra-jrqjqdw28-hk-digital.vercel.app)
-
 ## 🌐 Demo
 
-**Live Website:** [https://modtra-jrqjqdw28-hk-digital.vercel.app](https://modtra-jrqjqdw28-hk-digital.vercel.app)
+**Live Website:** [https://modrta.vercel.app](https://modrta.vercel.app)
 
 ---
 
