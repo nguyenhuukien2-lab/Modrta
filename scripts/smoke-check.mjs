@@ -35,10 +35,19 @@ function request(method, path, data, headers = {}) {
 
 async function main() {
   const email = `smoke-${Date.now()}@example.com`
-  const password = 'password123'
+  const password = 'CedarTea908'
   const name = 'Smoke Tester'
+  const phone = `091${String(Date.now()).slice(-7)}`
 
-  const register = await request('POST', '/api/auth/register', { email, password, name })
+  const register = await request('POST', '/api/auth/register', {
+    email,
+    password,
+    confirmPassword: password,
+    name,
+    phone,
+    agreedTerms: true,
+    newsletter: true,
+  })
   console.log('REGISTER', register.status, register.body)
 
   const login = await request('POST', '/api/auth/login', { email, password })

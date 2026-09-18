@@ -13,7 +13,7 @@ function LoginForm() {
 
   const redirect = searchParams.get('redirect') || '/'
   const [formData, setFormData] = useState({
-    email: '',
+    identifier: '',
     password: '',
   })
   const [error, setError] = useState<string | null>(null)
@@ -28,13 +28,8 @@ function LoginForm() {
   }
 
   const validateForm = (): boolean => {
-    if (!formData.email.trim()) {
-      setError('Vui lòng nhập email')
-      return false
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setError('Email không hợp lệ')
+    if (!formData.identifier.trim()) {
+      setError('Vui lòng nhập email hoặc số điện thoại')
       return false
     }
 
@@ -54,7 +49,7 @@ function LoginForm() {
     try {
       setLoading(true)
       await login({
-        email: formData.email,
+        email: formData.identifier,
         password: formData.password,
       })
 
@@ -102,13 +97,13 @@ function LoginForm() {
               </label>
               <input
                 type="email"
-                name="email"
-                value={formData.email}
+                name="identifier"
+                value={formData.identifier}
                 onChange={handleChange}
-                placeholder="email@example.com"
+                placeholder="Email hoặc số điện thoại"
                 className="w-full px-4 py-3 border-2 border-surface-card-alt rounded-lg focus:border-brand-accent focus:outline-none transition-colors"
                 disabled={loading}
-                autoComplete="email"
+                autoComplete="username"
               />
             </div>
 

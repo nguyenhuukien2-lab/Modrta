@@ -138,13 +138,20 @@ model User {
   email        String   @unique
   passwordHash String
   name         String
-  phone        String?
+  phone        String?  @unique
   address      String?
   district     String?
   city         String?
   role         String   @default("USER")  // "USER" | "ADMIN"
   tier         UserTier @default(member)   // member | silver | gold
   loyaltyPoints Int     @default(0)        // Cumulative points
+  newsletter   Boolean  @default(true)
+  agreedTermsAt DateTime?
+  emailVerified Boolean  @default(false)
+  phoneVerified Boolean  @default(false)
+  lastLoginAt  DateTime?
+  failedLoginAttempts Int @default(0)
+  lockedUntil  DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

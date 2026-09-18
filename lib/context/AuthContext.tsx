@@ -21,7 +21,7 @@ export interface AuthContextType {
   isAuthenticated: boolean
 
   // Methods
-  register: (data: { email: string; password: string; name: string; phone?: string }) => Promise<void>
+  register: (data: { email: string; password: string; name: string; phone: string; confirmPassword: string; agreedTerms: boolean; newsletter: boolean }) => Promise<void>
   login: (data: { email: string; password: string }) => Promise<void>
   logout: () => Promise<void>
   clearError: () => void
@@ -59,7 +59,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string
     password: string
     name: string
-    phone?: string
+    phone: string
+    confirmPassword: string
+    agreedTerms: boolean
+    newsletter: boolean
   }) => {
     try {
       setError(null)

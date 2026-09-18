@@ -34,6 +34,9 @@ export async function register(data: {
   password: string
   name: string
   phone?: string
+  confirmPassword?: string
+  agreedTerms?: boolean
+  newsletter?: boolean
 }): Promise<AuthResponse> {
   try {
     const res = await fetch(`${API_BASE}/api/auth/register`, {

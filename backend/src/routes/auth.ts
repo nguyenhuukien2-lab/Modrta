@@ -3,41 +3,80 @@ import { prisma } from '../lib/prisma'
 import { hashPassword, comparePassword } from '../utils/password'
 import { signToken } from '../utils/jwt'
 import { AuthRequest, authMiddleware } from '../middleware/authMiddleware'
+import { simpleRateLimit } from '../middleware/rateLimit'
+import {
+  normalizeEmail,
+  normalizePhone,
+  validateLoginInput,
+  validateRegisterInput,
+} from '../utils/validation'
 
 const router = Router()
+
+const authCookieOptions = {
+  httpOnly: true,
+  sameSite: process.env.NODE_ENV === 'production' ? 'strict' as const : 'lax' as const,
+  secure: process.env.NODE_ENV === 'production',
+  maxAge: 30 * 24 * 60 * 60 * 1000,
+  path: '/',
+}
+
+function publicUser(user: {
+  id: string
+  email: string
+  name: string
+  phone?: string | null
+  role?: string
+  tier?: string
+  loyaltyPoints?: number
+  createdAt?: Date
+  lastLoginAt?: Date | null
+}) {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    phone: user.phone,
+    role: user.role || 'USER',
+    tier: user.tier,
+    points: user.loyaltyPoints,
+    createdAt: user.createdAt,
+    lastLoginAt: user.lastLoginAt,
+  }
+}
 
 // ─── POST /api/auth/register ────────────────────────────────────────────────
 /**
  * Register new user
  * Body: { email, password, name, phone? }
  */
-router.post('/register', async (req: AuthRequest, res: Response) => {
+router.post('/register', simpleRateLimit({
+  windowMs: 60 * 60 * 1000,
+  maxRequests: 10,
+  message: 'Quá nhiều lần đăng ký. Vui lòng chờ 1 giờ.',
+}), async (req: AuthRequest, res: Response) => {
   try {
-    const { email, password, name, phone } = req.body
-
-    // ⚠️ VALIDATION
-    if (!email || !password || !name) {
-      res.status(400).json({ error: 'Missing required fields' })
+    const { email, password, name, phone, confirmPassword, agreedTerms, newsletter = true } = req.body
+    const errors = validateRegisterInput({ name, email, phone, password, confirmPassword, agreedTerms, newsletter })
+    if (Object.keys(errors).length > 0) {
+      res.status(400).json({ error: 'Validation failed', errors })
       return
     }
 
-    if (password.length < 8) {
-      res.status(400).json({ error: 'Password must be at least 8 characters' })
-      return
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      res.status(400).json({ error: 'Invalid email format' })
-      return
-    }
-
-    // ⚠️ Check if user exists
+    const normalizedEmail = normalizeEmail(email)
+    const normalizedPhone = normalizePhone(phone)
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     })
 
     if (existingUser) {
-      res.status(409).json({ error: 'Email already registered' })
+      res.status(409).json({ error: 'Email này đã được đăng ký' })
+      return
+    }
+
+    const existingPhone = await prisma.user.findUnique({ where: { phone: normalizedPhone } })
+    if (existingPhone) {
+      res.status(409).json({ error: 'Số điện thoại này đã được đăng ký' })
       return
     }
 
@@ -47,10 +86,12 @@ router.post('/register', async (req: AuthRequest, res: Response) => {
     // Create user
     const user = await prisma.user.create({
       data: {
-        email,
+        email: normalizedEmail,
         passwordHash,
-        name,
-        phone,
+        name: name.trim(),
+        phone: normalizedPhone,
+        newsletter: Boolean(newsletter),
+        agreedTermsAt: new Date(),
       },
     })
 
@@ -61,25 +102,19 @@ router.post('/register', async (req: AuthRequest, res: Response) => {
       role: user.role || 'USER',
     })
 
-    res.cookie('modtra_token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    })
+    res.cookie('modtra_token', token, authCookieOptions)
 
     res.status(201).json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role || 'USER',
-      },
+      success: true,
+      user: publicUser(user),
       token,
     })
   } catch (error) {
     console.error('[POST /api/auth/register]', error)
+    if ((error as { code?: string }).code === 'P2002') {
+      res.status(409).json({ error: 'Email hoặc số điện thoại này đã được đăng ký' })
+      return
+    }
     res.status(500).json({ error: 'Failed to register' })
   }
 })
@@ -89,29 +124,36 @@ router.post('/register', async (req: AuthRequest, res: Response) => {
  * Login user
  * Body: { email, password }
  */
-router.post('/login', async (req: AuthRequest, res: Response) => {
+router.post('/login', simpleRateLimit({
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 5,
+  message: 'Quá nhiều lần thử sai. Vui lòng chờ 15 phút.',
+  keyGenerator: (req) => `${req.ip}:${String(req.body?.emailOrPhone || req.body?.email || '').trim().toLowerCase()}`,
+}), async (req: AuthRequest, res: Response) => {
   try {
-    const { email, password } = req.body
-
-    // ⚠️ VALIDATION
-    if (!email || !password) {
-      res.status(400).json({ error: 'Missing email or password' })
+    const identifier = String(req.body.emailOrPhone || req.body.email || '')
+    const { password } = req.body
+    const errors = validateLoginInput(identifier, String(password || ''))
+    if (Object.keys(errors).length > 0) {
+      res.status(400).json({ error: 'Validation failed', errors })
       return
     }
 
-    const normalizedEmail = String(email).trim().toLowerCase()
+    const normalizedIdentifier = identifier.trim()
+    const isEmail = normalizedIdentifier.includes('@')
+    const lookup = isEmail
+      ? { email: normalizeEmail(normalizedIdentifier) }
+      : { phone: normalizePhone(normalizedIdentifier) }
 
-    let user = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
-    })
+    let user = await prisma.user.findUnique({ where: lookup })
 
-    if (!user && normalizedEmail === 'test@example.com' && password === 'password123') {
+    if (!user && isEmail && normalizeEmail(normalizedIdentifier) === 'test@example.com' && password === 'password123') {
       const demoPasswordHash = await hashPassword(password)
       user = await prisma.user.upsert({
-        where: { email: normalizedEmail },
+        where: { email: 'test@example.com' },
         update: { passwordHash: demoPasswordHash, name: 'Demo Customer' },
         create: {
-          email: normalizedEmail,
+          email: 'test@example.com',
           passwordHash: demoPasswordHash,
           name: 'Demo Customer',
         },
@@ -119,43 +161,51 @@ router.post('/login', async (req: AuthRequest, res: Response) => {
     }
 
     if (!user) {
-      // ⚠️ SECURITY: Don't reveal if email exists
-      res.status(401).json({ error: 'Invalid credentials' })
+      console.warn('[AUTH_FAILED]', { identifier: normalizedIdentifier, ip: req.ip, at: new Date().toISOString() })
+      res.status(401).json({ error: 'Email/số điện thoại hoặc mật khẩu không đúng' })
       return
     }
 
-    // Compare password
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      res.status(429).json({ error: 'Quá nhiều lần thử sai. Vui lòng chờ 15 phút.' })
+      return
+    }
+
     const isPasswordValid = await comparePassword(password, user.passwordHash)
 
     if (!isPasswordValid) {
-      res.status(401).json({ error: 'Invalid credentials' })
+      const failedLoginAttempts = user.failedLoginAttempts + 1
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          failedLoginAttempts,
+          lockedUntil: failedLoginAttempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null,
+        },
+      })
+      console.warn('[AUTH_FAILED]', { userId: user.id, identifier: normalizedIdentifier, ip: req.ip, at: new Date().toISOString() })
+      res.status(failedLoginAttempts >= 5 ? 429 : 401).json({ error: failedLoginAttempts >= 5 ? 'Quá nhiều lần thử sai. Vui lòng chờ 15 phút.' : 'Email/số điện thoại hoặc mật khẩu không đúng' })
       return
     }
 
-    // Generate token
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { failedLoginAttempts: 0, lockedUntil: null, lastLoginAt: new Date() },
+    })
+
     const token = await signToken({
       userId: user.id,
       email: user.email,
       role: user.role || 'USER',
     })
 
-    res.cookie('modtra_token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    })
+    res.cookie('modtra_token', token, authCookieOptions)
 
     res.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role || 'USER',
-      },
+      success: true,
+      user: publicUser(user),
       token,
     })
+    console.info('[AUTH_SUCCESS]', { userId: user.id, ip: req.ip, at: new Date().toISOString() })
   } catch (error) {
     console.error('[POST /api/auth/login]', error)
     res.status(500).json({ error: 'Failed to login' })

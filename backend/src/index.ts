@@ -77,7 +77,7 @@ app.get('/health', (_req, res) => {
 })
 
 // ─── API ROUTES ────────────────────────────────────────────────────────────────
-app.use('/api/auth', simpleRateLimit({ windowMs: 60 * 1000, maxRequests: 15 }), authRouter)
+app.use('/api/auth', authRouter)
 app.use('/api/reviews', reviewsRouter)
 app.use('/api/cart', cartRouter)
 app.use('/api/orders', simpleRateLimit({ windowMs: 60 * 1000, maxRequests: 30 }), ordersRouter)

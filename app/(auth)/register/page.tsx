@@ -19,6 +19,8 @@ function RegisterForm() {
     phone: '',
     password: '',
     confirmPassword: '',
+    agreedTerms: false,
+    newsletter: true,
   })
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -31,8 +33,14 @@ function RegisterForm() {
   }
 
   const validateForm = (): boolean => {
-    if (!formData.name.trim()) {
-      setError('Vui lòng nhập họ tên')
+    const name = formData.name.trim()
+    if (name.length < 2 || name.length > 50) {
+      setError('Tên phải từ 2-50 ký tự')
+      return false
+    }
+
+    if (!/^[\p{L}\p{N}\s-]+$/u.test(name) || !/\p{L}/u.test(name)) {
+      setError('Tên không được chứa ký tự đặc biệt')
       return false
     }
 
@@ -46,18 +54,29 @@ function RegisterForm() {
       return false
     }
 
-    if (!formData.password) {
-      setError('Vui lòng nhập mật khẩu')
+    const normalizedPhone = formData.phone.replace(/[\s()-]/g, '')
+    if (!/^0[35789]\d{8}$/.test(normalizedPhone) && !/^\+84[35789]\d{8}$/.test(normalizedPhone)) {
+      setError('Số điện thoại không hợp lệ (vd: 0913548678)')
       return false
     }
 
-    if (formData.password.length < 8) {
-      setError('Mật khẩu phải ít nhất 8 ký tự')
+    if (formData.password.length < 8 || formData.password.length > 128) {
+      setError('Mật khẩu tối thiểu 8 ký tự')
+      return false
+    }
+
+    if (!/[A-Z]/.test(formData.password) || !/[a-z]/.test(formData.password) || !/\d/.test(formData.password)) {
+      setError('Mật khẩu phải chứa chữ hoa, chữ thường, số')
       return false
     }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Mật khẩu xác nhận không khớp')
+      return false
+    }
+
+    if (!formData.agreedTerms) {
+      setError('Phải chấp nhận điều khoản để tiếp tục')
       return false
     }
 
@@ -74,8 +93,11 @@ function RegisterForm() {
       await register({
         name: formData.name,
         email: formData.email,
-        phone: formData.phone || undefined,
+        phone: formData.phone,
         password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        agreedTerms: formData.agreedTerms,
+        newsletter: formData.newsletter,
       })
 
       // Redirect to intended page or home
@@ -145,7 +167,7 @@ function RegisterForm() {
             {/* Phone */}
             <div>
               <label className="block text-sm font-medium text-text-main mb-2">
-                Số điện thoại (tùy chọn)
+                Số điện thoại *
               </label>
               <input
                 type="tel"
@@ -155,6 +177,7 @@ function RegisterForm() {
                 placeholder="0901234567"
                 className="w-full px-4 py-3 border-2 border-surface-card-alt rounded-lg focus:border-brand-accent focus:outline-none transition-colors"
                 disabled={loading}
+                autoComplete="tel"
               />
             </div>
 
@@ -173,9 +196,31 @@ function RegisterForm() {
                 disabled={loading}
               />
               <p className="text-xs text-text-muted mt-1">
-                Mật khẩu phải chứa chữ cái, số, và ký tự đặc biệt
+                Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường và số
               </p>
             </div>
+
+            <label className="flex items-start gap-2 text-sm text-text-muted">
+              <input
+                type="checkbox"
+                checked={formData.agreedTerms}
+                onChange={(e) => setFormData(prev => ({ ...prev, agreedTerms: e.target.checked }))}
+                className="mt-1 w-4 h-4"
+                disabled={loading}
+              />
+              <span>Tôi đồng ý với Điều khoản và Chính sách bảo mật *</span>
+            </label>
+
+            <label className="flex items-start gap-2 text-sm text-text-muted">
+              <input
+                type="checkbox"
+                checked={formData.newsletter}
+                onChange={(e) => setFormData(prev => ({ ...prev, newsletter: e.target.checked }))}
+                className="mt-1 w-4 h-4"
+                disabled={loading}
+              />
+              <span>Nhận bản tin từ Modtra</span>
+            </label>
 
             {/* Confirm Password */}
             <div>
