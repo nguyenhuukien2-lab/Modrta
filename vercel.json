@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "env": {
+    "DATABASE_URL": "@DATABASE_URL",
+    "DIRECT_URL": "@DIRECT_URL",
+    "JWT_SECRET": "@JWT_SECRET",
+    "BCRYPT_ROUNDS": "@BCRYPT_ROUNDS",
+    "INTERNAL_API_SECRET": "@INTERNAL_API_SECRET",
+    "CRON_SECRET": "@CRON_SECRET",
+    "NODE_ENV": "@NODE_ENV",
+    "FRONTEND_URL": "@FRONTEND_URL"
+  },
+  "functions": {
+    "api/**/*.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  }
+}
