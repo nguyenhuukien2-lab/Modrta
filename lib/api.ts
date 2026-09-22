@@ -112,14 +112,18 @@ export interface CreateOrderInput {
 export async function createOrder(order: CreateOrderInput, token: string) {
   const res = await fetch(`${API_BASE}/api/orders`, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      ...(token !== 'cookie-session' ? { 'Authorization': `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(order),
   })
 
-  if (!res.ok) throw new Error('Failed to create order')
+  if (!res.ok) {
+    const body = await res.json().catch(() => null) as { error?: string } | null
+    throw new Error(body?.error || 'Failed to create order')
+  }
   return res.json() as Promise<ApiResponse<any>>
 }
 
