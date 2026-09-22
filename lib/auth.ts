@@ -99,7 +99,7 @@ export async function login(data: {
 
 // ─── GET CURRENT USER ────────────────────────────────────────────────────────
 
-export async function getCurrentUser(token?: string): Promise<AuthUser> {
+export async function getCurrentUser(token?: string): Promise<AuthUser | null> {
   const res = await fetch(`${API_BASE}/api/auth/me`, {
     credentials: 'include',
     headers: token ? { Authorization: `Bearer ${token}` } : {},

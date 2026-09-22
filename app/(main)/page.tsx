@@ -141,6 +141,7 @@ export default function Home() {
                   src="https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800"
                   alt="Matcha Latte Modtra"
                   fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover camera-zoom"
                   priority
                 />

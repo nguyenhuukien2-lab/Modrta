@@ -54,6 +54,7 @@ export default function CinematicImage({
         src={src}
         alt={alt}
         fill
+        sizes="(max-width: 768px) 100vw, 50vw"
         className={`object-cover transition-transform duration-700 ${
           zoom && isHovered ? 'scale-110' : 'scale-100'
         }`}

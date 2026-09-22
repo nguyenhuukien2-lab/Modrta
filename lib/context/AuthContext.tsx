@@ -41,9 +41,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const currentUser = await getCurrentUser()
         setUser(currentUser)
-        setToken('cookie-session')
+        setToken(currentUser ? 'cookie-session' : null)
       } catch (err) {
-        console.error('Auth init failed:', err)
+        if (!(err instanceof Error && err.message === 'Missing authorization token')) {
+          console.error('Auth init failed:', err)
+        }
         setUser(null)
         setToken(null)
         removeToken()

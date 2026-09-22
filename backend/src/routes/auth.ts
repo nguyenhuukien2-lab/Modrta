@@ -2,7 +2,7 @@ import { Router, Response } from 'express'
 import { prisma } from '../lib/prisma'
 import { hashPassword, comparePassword } from '../utils/password'
 import { signToken } from '../utils/jwt'
-import { AuthRequest, authMiddleware } from '../middleware/authMiddleware'
+import { AuthRequest, authMiddleware, optionalAuthMiddleware } from '../middleware/authMiddleware'
 import { simpleRateLimit } from '../middleware/rateLimit'
 import {
   normalizeEmail,
@@ -216,10 +216,10 @@ router.post('/login', simpleRateLimit({
 /**
  * Get current user (requires auth)
  */
-router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/me', optionalAuthMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {
-      res.status(401).json({ error: 'Unauthorized' })
+      res.json(null)
       return
     }
 
