@@ -38,6 +38,7 @@ const allowedOrigins = [
   'http://127.0.0.1:3001',
   'http://127.0.0.1:3002',
   'http://127.0.0.1:3003',
+  'https://modrta.vercel.app',
   process.env.FRONTEND_URL,
 ].filter(Boolean) as string[]
 
