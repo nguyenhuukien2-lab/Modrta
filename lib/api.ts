@@ -143,12 +143,18 @@ export async function getOrders(token: string | null, limit = 20, offset = 0) {
   return res.json() as Promise<ApiResponse<any[]>>
 }
 
-export async function getOrder(orderId: string, token: string) {
+export async function getOrder(orderId: string, token: string | null) {
   const res = await fetch(`${API_BASE}/api/orders/${orderId}`, {
-    headers: { 'Authorization': `Bearer ${token}` },
+    credentials: 'include',
+    headers: token && token !== 'cookie-session'
+      ? { 'Authorization': `Bearer ${token}` }
+      : {},
   })
 
-  if (!res.ok) throw new Error('Failed to fetch order')
+  if (!res.ok) {
+    const body = await res.json().catch(() => null) as { error?: string } | null
+    throw new Error(body?.error || 'Failed to fetch order')
+  }
   return res.json() as Promise<ApiResponse<any>>
 }
 
