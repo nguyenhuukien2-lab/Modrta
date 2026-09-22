@@ -6,14 +6,19 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const auth = req.headers.get('Authorization') || ''
+    const cookie = req.headers.get('cookie') || ''
 
-    if (!auth) {
+    if (!auth && !cookie) {
       return NextResponse.json({ error: 'Missing authorization token' }, { status: 401 })
     }
 
     const res = await fetch(`${BACKEND}/api/orders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': auth },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(auth ? { 'Authorization': auth } : {}),
+        ...(cookie ? { 'Cookie': cookie } : {}),
+      },
       body: JSON.stringify(body),
     })
     const data = await res.json()
@@ -26,9 +31,13 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const auth = req.headers.get('Authorization') || ''
+    const cookie = req.headers.get('cookie') || ''
     const { searchParams } = new URL(req.url)
     const res = await fetch(`${BACKEND}/api/orders?${searchParams.toString()}`, {
-      headers: { 'Authorization': auth },
+      headers: {
+        ...(auth ? { 'Authorization': auth } : {}),
+        ...(cookie ? { 'Cookie': cookie } : {}),
+      },
       cache: 'no-store',
     })
     const data = await res.json()

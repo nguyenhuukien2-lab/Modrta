@@ -123,13 +123,16 @@ export async function createOrder(order: CreateOrderInput, token: string) {
   return res.json() as Promise<ApiResponse<any>>
 }
 
-export async function getOrders(token: string, limit = 20, offset = 0) {
+export async function getOrders(token: string | null, limit = 20, offset = 0) {
   const params = new URLSearchParams()
   params.append('limit', String(limit))
   params.append('offset', String(offset))
 
   const res = await fetch(`${API_BASE}/api/orders?${params.toString()}`, {
-    headers: { 'Authorization': `Bearer ${token}` },
+    credentials: 'include',
+    headers: token && token !== 'cookie-session'
+      ? { 'Authorization': `Bearer ${token}` }
+      : {},
   })
 
   if (!res.ok) throw new Error('Failed to fetch orders')
