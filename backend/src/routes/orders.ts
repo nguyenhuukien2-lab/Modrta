@@ -115,11 +115,12 @@ router.post('/', authMiddleware, async (req: Request, res: Response, next: NextF
       }
     }
 
-    // Calculate shipping (simple logic: 25k for delivery, 0 for pickup)
+    // Calculate shipping and optional eco packaging fee on the server.
     const shipping = deliveryMethod === 'delivery' ? 25000 : 0
+    const ecoPackagingFee = ecoPackaging ? 5000 : 0
 
     // Calculate total
-    const total = subtotal - discount + shipping
+    const total = subtotal - discount + shipping + ecoPackagingFee
 
     // Create order
     const order = await prisma.order.create({

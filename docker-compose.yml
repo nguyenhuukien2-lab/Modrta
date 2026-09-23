@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: modtra
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d modtra"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - modtra-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: builder
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/modtra
+      DIRECT_URL: postgresql://postgres:password@postgres:5432/modtra
+      JWT_SECRET: dev-secret-change-me
+      INTERNAL_API_SECRET: dev-internal-secret-change-me
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/prisma:/app/prisma
+    command: npm run dev
+    networks:
+      - modtra-network
+
+networks:
+  modtra-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

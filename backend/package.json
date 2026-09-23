@@ -9,7 +9,7 @@
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
     "prisma:migrate": "prisma migrate dev --schema=prisma/schema.prisma",
-    "prisma:seed": "node prisma/seed.ts",
+    "prisma:seed": "tsx prisma/seed.ts",
     "check": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {

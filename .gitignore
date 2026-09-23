@@ -51,3 +51,6 @@ next-env.d.ts
 # prisma
 backend/prisma/*.db
 backend/prisma/*.db-journal
+
+.cursor/hooks.json
+.cursor/hooks/after-agent-response.js
