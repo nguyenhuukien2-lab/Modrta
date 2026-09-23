@@ -21,6 +21,15 @@ async function readJsonResponse<T>(res: Response): Promise<T> {
   }
 }
 
+function getApiErrorMessage(response: { error?: string; errors?: Record<string, string> }, fallback: string) {
+  if (response.errors) {
+    const messages = Object.values(response.errors).filter(Boolean)
+    if (messages.length > 0) return messages.join('. ')
+  }
+
+  return response.error || fallback
+}
+
 export interface AuthUser {
   id: string
   email: string
@@ -59,10 +68,10 @@ export async function register(data: {
       body: JSON.stringify(data),
     })
 
-    const json = await readJsonResponse<AuthResponse & { error?: string }>(res)
+    const json = await readJsonResponse<AuthResponse & { error?: string; errors?: Record<string, string> }>(res)
 
     if (!res.ok) {
-      throw new Error(json.error || 'Registration failed')
+      throw new Error(getApiErrorMessage(json, 'Registration failed'))
     }
 
     return json
@@ -85,10 +94,10 @@ export async function login(data: {
       body: JSON.stringify(data),
     })
 
-    const json = await readJsonResponse<AuthResponse & { error?: string }>(res)
+    const json = await readJsonResponse<AuthResponse & { error?: string; errors?: Record<string, string> }>(res)
 
     if (!res.ok) {
-      throw new Error(json.error || 'Login failed')
+      throw new Error(getApiErrorMessage(json, 'Login failed'))
     }
 
     return json
